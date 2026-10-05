@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Atelier Hada • Mi Inventario Creativo</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Robust Self-Contained Fairy CSS (Works 100% on iOS Safari, Android, Desktop) -->
+    <style>
+        :root {
+            --pink-50: #fff1f5;
+            --pink-100: #ffe4ed;
+            --pink-200: #fecddc;
+            --pink-300: #fda4c0;
+            --pink-400: #fb719e;
+            --pink-500: #f43f7d;
+            --pink-600: #e11d62;
+            --pink-700: #be124e;
+            --pink-900: #85143e;
+            
+            --mint-50: #f0fdf9;
+            --mint-100: #ccfbf1;
+            --mint-200: #99f6e4;
+            --mint-300: #5eead4;
+            --mint-500: #14b8a6;
+            --mint-700: #0f766e;
+            --mint-900: #134e4a;
+            
+            --yellow-50: #fffbeb;
+            --yellow-100: #fef3c7;
+            --yellow-200: #fde68a;
+            --yellow-400: #fbbf24;
+            --yellow-700: #b45309;
+            --yellow-900: #78350f;
+
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #fff1f5 0%, #fffbeb 40%, #f0fdf9 100%);
+            background-attachment: fixed;
+            color: var(--slate-800);
+            min-height: 100vh;
+            padding: 16px 12px 40px 12px;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphic main container */
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .fairy-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--pink-200);
+            padding: 5px 14px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--pink-700);
+            box-shadow: 0 2px 8px rgba(254, 205, 220, 0.4);
+            margin-bottom: 8px;
+        }
+
+        .main-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(26px, 5vw, 42px);
+            font-weight: 800;
+            color: var(--slate-900);
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+        }
+
+        .main-title span {
+            background: linear-gradient(135deg, var(--pink-500), var(--mint-500));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-subtitle {
+            font-size: 14px;
+            color: var(--slate-600);
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 16px 36px -8px rgba(244, 63, 125, 0.12), 0 4px 16px rgba(45, 212, 191, 0.08);
+            padding: 20px 16px;
+        }
+
+        @media (min-width: 640px) {
+            body { padding: 32px 20px 60px 20px; }
+            .glass-card { padding: 32px 28px; border-radius: 36px; }
+        }
+
+        /* Top Action Bar */
+        .action-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 600px) {
+            .action-bar { flex-direction: row; align-items: center; }
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 13px 14px 13px 42px;
+            background: rgba(255, 241, 245, 0.6);
+            border: 1.5px solid var(--pink-200);
+            border-radius: 18px;
+            font-size: 14px;
+            color: var(--slate-800);
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            background: #ffffff;
+            border-color: var(--pink-500);
+            box-shadow: 0 0 0 4px rgba(244, 63, 125, 0.15);
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, var(--pink-500) 0%, #fb7185 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 18px;
+            padding: 13px 22px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 6px 18px rgba(244, 63, 125, 0.35);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 22px rgba(244, 63, 125, 0.45);
+        }
+
+        .btn-add:active {
+            transform: scale(0.97);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 600px) {
+            .stats-grid { gap: 14px; }
+        }
+
+        .stat-card {
+            border-radius: 20px;
+            padding: 12px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid transparent;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        @media (min-width: 600px) {
+            .stat-card {
+                padding: 16px;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .stat-card.pink {
+            background: linear-gradient(135deg, #fff1f5 0%, #ffe4ed 100%);
+            border-color: var(--pink-200);
+        }
+        .stat-card.yellow {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-color: var(--yellow-200);
+        }
+        .stat-card.mint {
+            background: linear-gradient(135deg, #f0fdf9 0%, #ccfbf1 100%);
+            border-color: var(--mint-200);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 2px;
+        }
+
+        .stat-card.pink .stat-label { color: var(--pink-700); }
+        .stat-card.yellow .stat-label { color: var(--yellow-700); }
+        .stat-card.mint .stat-label { color: var(--mint-700); }
+
+        .stat-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(18px, 4vw, 24px);
+            font-weight: 800;
+        }
+
+        .stat-card.pink .stat-val { color: var(--pink-900); }
+        .stat-card.yellow .stat-val { color: var(--yellow-900); }
+        .stat-card.mint .stat-val { color: var(--mint-900); }
+
+        .stat-icon {
+            font-size: 20px;
+            display: none;
+        }
+        @media (min-width: 600px) { .stat-icon { display: block; } }
+
+        /* Categories Scroll */
+        .categories-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 18px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .categories-scroll::-webkit-scrollbar { display: none; }
+
+        .cat-chip {
+            padding: 8px 16px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--pink-100);
+            background: rgba(255, 255, 255, 0.85);
+            color: var(--slate-600);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .cat-chip.active {
+            background: linear-gradient(135deg, var(--pink-500), #fb7185);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(244, 63, 125, 0.3);
+        }
+
+        /* Material Item Row */
+        .material-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .material-item {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1.5px solid var(--pink-100);
+            border-radius: 22px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(254, 205, 220, 0.25);
+        }
+
+        @media (min-width: 600px) {
+            .material-item {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 16px 20px;
+            }
+        }
+
+        .material-item:hover {
+            border-color: var(--pink-300);
+            box-shadow: 0 8px 24px rgba(244, 63, 125, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .item-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-emoji-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 16px;
+            background: var(--pink-50);
+            border: 1px solid var(--pink-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .item-name {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--slate-900);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .low-stock-tag {
+            background: var(--yellow-100);
+            border: 1px solid var(--yellow-400);
+            color: var(--yellow-900);
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 8px;
+        }
+
+        .item-meta {
+            font-size: 12px;
+            color: var(--slate-500);
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .item-category-tag {
+            color: var(--pink-700);
+            font-weight: 700;
+        }
+
+        /* Controls: Quantity + / - and Edit */
+        .item-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-shrink: 0;
+            padding-top: 8px;
+            border-top: 1px solid var(--pink-50);
+        }
+
+        @media (min-width: 600px) {
+            .item-controls {
+                justify-content: flex-end;
+                padding-top: 0;
+                border-top: none;
+            }
+        }
+
+        .qty-badge {
+            background: linear-gradient(135deg, var(--mint-50), var(--mint-100));
+            border: 1.5px solid var(--mint-300);
+            border-radius: 14px;
+            padding: 6px 14px;
+            text-align: right;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .qty-number {
+            font-family: 'Outfit', sans-serif;
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--mint-900);
+        }
+
+        .qty-unit {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--mint-700);
+            letter-spacing: 0.03em;
+        }
+
+        .btn-stepper-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--pink-50);
+            padding: 4px;
+            border-radius: 16px;
+            border: 1px solid var(--pink-200);
+        }
+
+        .btn-step {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .btn-step.minus {
+            background: #ffffff;
+            color: var(--pink-700);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+
+        .btn-step.plus {
+            background: linear-gradient(135deg, var(--mint-500), #2dd4bf);
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(20, 184, 166, 0.3);
+        }
+
+        .btn-step:active { transform: scale(0.9); }
+
+        .btn-edit {
+            background: #ffffff;
+            border: 1px solid var(--pink-200);
+            color: var(--pink-700);
+            padding: 7px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit:hover { background: var(--pink-50); }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: var(--slate-400);
+            cursor: pointer;
+            padding: 6px;
+            font-size: 16px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-delete:hover { color: #e11d48; background: #ffe4e6; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 100;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            background: #ffffff;
+            border-radius: 28px;
+            max-width: 500px;
+            width: 100%;
+            padding: 24px;
+            border: 1px solid var(--pink-200);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--pink-100);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--slate-900);
+        }
+
+        .btn-close-modal {
+            background: var(--slate-100);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            color: var(--slate-600);
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--pink-700);
+            margin-bottom: 6px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--pink-200);
+            border-radius: 14px;
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--slate-800);
+            background: var(--pink-50);
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus {
+            background: #ffffff;
+            border-color: var(--pink-500);
+            box-shadow: 0 0 0 3px rgba(244, 63, 125, 0.15);
+        }
+
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            border-top: 1px solid var(--pink-100);
+            padding-top: 16px;
+        }
+
+        .btn-cancel {
+            background: var(--slate-100);
+            color: var(--slate-700);
+            border: none;
+            padding: 12px 18px;
+            border-radius: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--pink-500), #fb7185);
+            color: #ffffff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 4px 14px rgba(244, 63, 125, 0.35);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 20px;
+            background: var(--slate-900);
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 18px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            border: 1px solid var(--pink-400);
+            z-index: 200;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(255, 241, 245, 0.5);
+            border: 2px dashed var(--pink-200);
+            border-radius: 24px;
+            color: var(--slate-600);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- Header -->
+        <header class="fairy-header">
+            <div class="badge-pill">
+                <span>✨</span>
+                <span>Atelier Mágico de Diseño & Papelería</span>
+                <span>🧚</span>
+            </div>
+            <h1 class="main-title">Mi Inventario <span>Creativo</span></h1>
+            <p class="main-subtitle">Control de materiales, pliegos, metros y láminas con estilo</p>
+        </header>
+
+        <!-- Main Card -->
+        <main class="glass-card">
+            
+            <!-- Action Bar -->
+            <div class="action-bar">
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input" 
+                        placeholder="Buscar por nombre, categoría o medidas..." 
+                        oninput="app.onSearch()">
+                </div>
+                <button class="btn-add" onclick="app.openModal()">
+                    <span>✨</span>
+                    <span>+ Agregar Objeto</span>
+                </button>
+            </div>
+
+            <!-- Stats Grid (Rosa, Amarillo, Menta) -->
+            <div class="stats-grid">
+                <div class="stat-card pink">
+                    <div>
+                        <div class="stat-label">Total Materiales</div>
+                        <div class="stat-val" id="statTotal">0</div>
+                    </div>
+                    <div class="stat-icon">🌸</div>
+                </div>
+                <div class="stat-card yellow">
+                    <div>
+                        <div class="stat-label">Stock Bajo</div>
+                        <div class="stat-val" id="statLowStock">0</div>
+                    </div>
+                    <div class="stat-icon">⚠️</div>
+                </div>
+                <div class="stat-card mint">
+                    <div>
+                        <div class="stat-label">Categorías</div>
+                        <div class="stat-val" id="statCategories">0</div>
+                    </div>
+                    <div class="stat-icon">🌿</div>
+                </div>
+            </div>
+
+            <!-- Categories Scroll -->
+            <div class="categories-scroll" id="categoriesContainer">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Materials List Container -->
+            <div class="material-list" id="materialsList">
+                <div style="text-align:center; padding: 30px; color: var(--pink-600); font-weight: 700;">
+                    ✨ Encantando el inventario...
+                </div>
+            </div>
+
+        </main>
+
+        <footer style="text-align: center; margin-top: 20px; font-size: 12px; color: var(--slate-500); font-weight: 600;">
+            ✨ Inventario Atelier • Verde Menta, Amarillo y Rosa 🌸
+        </footer>
+
+    </div>
+
+    <!-- Modal Form -->
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) app.closeModal()">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 22px;" id="modalEmoji">✨</span>
+                    <h3 class="modal-title" id="modalTitle">Agregar Nuevo Material</h3>
+                </div>
+                <button class="btn-close-modal" onclick="app.closeModal()">✕</button>
+            </div>
+
+            <form id="materialForm" onsubmit="app.saveItem(event)">
+                <input type="hidden" id="itemId">
+
+                <div class="form-group">
+                    <label class="form-label">Nombre del Material</label>
+                    <input type="text" id="itemName" class="form-input" required placeholder="Ej. Cartulina Holográfica, MDF, Cinta...">
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Categoría</label>
+                        <select id="itemCategory" class="form-select">
+                            <option value="Papelería">✂️ Papelería</option>
+                            <option value="Pintura">🎨 Pintura</option>
+                            <option value="Manualidades">✨ Manualidades</option>
+                            <option value="Materiales">🪵 Materiales / Madera</option>
+                            <option value="Herramientas">🔨 Herramientas</option>
+                            <option value="Textil">🧵 Textil</option>
+                            <option value="Otros">📦 Otros</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="color: var(--mint-700);">Unidad de Medida</label>
+                        <select id="itemUnit" class="form-select" style="background: var(--mint-50); border-color: var(--mint-200); font-weight: 700;">
+                            <optgroup label="✨ Conteo / Piezas">
+                                <option value="unidades">Unidades / Piezas</option>
+                                <option value="láminas">Láminas / Placas</option>
+                                <option value="pliegos">Pliegos</option>
+                                <option value="rollos">Rollos</option>
+                                <option value="cajas">Cajas / Paquetes</option>
+                                <option value="botes">Botes / Frascos</option>
+                            </optgroup>
+                            <optgroup label="📏 Medida Continua">
+                                <option value="metros">Metros (m)</option>
+                                <option value="centímetros">Centímetros (cm)</option>
+                            </optgroup>
+                            <optgroup label="⚖️ Peso / Volumen">
+                                <option value="gramos">Gramos (g)</option>
+                                <option value="kilos">Kilogramos (kg)</option>
+                                <option value="litros">Litros (L)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Cantidad Actual</label>
+                        <input type="number" id="itemQuantity" class="form-input" required min="0" step="any" value="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="color: var(--yellow-700);">Alerta Stock Mínimo</label>
+                        <input type="number" id="itemMinStock" class="form-input" min="0" step="any" value="2" style="background: var(--yellow-50); border-color: var(--yellow-200);">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--slate-600);">Notas / Dimensiones (Opcional)</label>
+                    <input type="text" id="itemNotes" class="form-input" placeholder="Ej. 60x40cm 3mm, color pastel...">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn-submit" id="btnSubmit">✨ Guardar Material</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span id="toastEmoji">🌸</span>
+        <span id="toastMsg">Mensaje</span>
+    </div>
+
+    <!-- Application Controller (Pure JS - 100% Reliable on all browsers) -->
+    <script>
+        const app = {
+            materials: [],
+            categories: ["Todas", "Papelería", "Pintura", "Manualidades", "Materiales", "Herramientas", "Textil", "Otros"],
+            selectedCategory: "Todas",
+            searchQuery: "",
+
+            async init() {
+                this.renderCategories();
+                await this.loadMaterials();
+            },
+
+            async loadMaterials() {
+                try {
+                    const res = await fetch('/api/materials');
+                    if (res.ok) {
+                        this.materials = await res.json();
+                    } else {
+                        console.error("API error", res.status);
+                    }
+                } catch (e) {
+                    console.error("Fetch error", e);
+                }
+                this.render();
+            },
+
+            renderCategories() {
+                const container = document.getElementById('categoriesContainer');
+                container.innerHTML = this.categories.map(cat => `
+                    <button 
+                        class="cat-chip ${this.selectedCategory === cat ? 'active' : ''}" 
+                        onclick="app.selectCategory('${cat}')">
+                        ${cat === 'Todas' ? '✨ Todas' : cat}
+                    </button>
+                `).join('');
+            },
+
+            selectCategory(cat) {
+                this.selectedCategory = cat;
+                this.renderCategories();
+                this.render();
+            },
+
+            onSearch() {
+                this.searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+                this.render();
+            },
+
+            getFiltered() {
+                return this.materials.filter(item => {
+                    const matchCat = this.selectedCategory === 'Todas' || item.category.toLowerCase() === this.selectedCategory.toLowerCase();
+                    const q = this.searchQuery;
+                    const matchQ = !q || 
+                        item.name.toLowerCase().includes(q) || 
+                        item.category.toLowerCase().includes(q) || 
+                        item.unit.toLowerCase().includes(q) || 
+                        (item.notes && item.notes.toLowerCase().includes(q));
+                    return matchCat && matchQ;
+                });
+            },
+
+            getCategoryEmoji(category) {
+                const c = (category || '').toLowerCase();
+                if (c.includes('papel')) return '✂️';
+                if (c.includes('pint')) return '🎨';
+                if (c.includes('manual')) return '✨';
+                if (c.includes('mater') || c.includes('mader')) return '🪵';
+                if (c.includes('herram')) return '🔨';
+                if (c.includes('textil')) return '🧵';
+                return '🌸';
+            },
+
+            getStep(unit) {
+                const u = (unit || '').toLowerCase();
+                if (u.includes('centímetro')) return 10;
+                return 1;
+            },
+
+            formatQty(qty) {
+                return Number.isInteger(qty) ? qty : parseFloat(qty.toFixed(2));
+            },
+
+            render() {
+                const filtered = this.getFiltered();
+                const list = document.getElementById('materialsList');
+
+                // Stats
+                document.getElementById('statTotal').innerText = this.materials.length;
+                const lowStockCount = this.materials.filter(m => m.quantity <= m.min_stock).length;
+                document.getElementById('statLowStock').innerText = lowStockCount;
+                document.getElementById('statCategories').innerText = this.categories.length - 1;
+
+                if (filtered.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size: 36px; margin-bottom: 8px;">🧚✨</div>
+                            <div style="font-weight: 800; font-size: 16px; color: var(--slate-800);">No se encontraron materiales</div>
+                            <div style="font-size: 13px; margin-top: 4px; color: var(--slate-500);">
+                                Agrega un nuevo objeto con el botón "+ Agregar Objeto"
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = filtered.map(item => {
+                    const isLow = item.quantity <= item.min_stock;
+                    const emoji = this.getCategoryEmoji(item.category);
+                    const step = this.getStep(item.unit);
+                    
+                    return `
+                        <div class="material-item">
+                            <div class="item-main">
+                                <div class="item-emoji-badge">${emoji}</div>
+                                <div class="item-info">
+                                    <div class="item-title-row">
+                                        <span class="item-name">${item.name}</span>
+                                        ${isLow ? '<span class="low-stock-tag">⚠️ Stock Bajo</span>' : ''}
+                                    </div>
+                                    <div class="item-meta">
+                                        <span class="item-category-tag">${item.category}</span>
+                                        ${item.notes ? `<span>• ${item.notes}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="item-controls">
+                                <div class="qty-badge">
+                                    <span class="qty-number">${this.formatQty(item.quantity)}</span>
+                                    <span class="qty-unit">${item.unit}</span>
+                                </div>
+
+                                <div class="btn-stepper-group">
+                                    <button class="btn-step minus" title="Restar" onclick="app.adjustStock(${item.id}, -${step})">−</button>
+                                    <button class="btn-step plus" title="Sumar" onclick="app.adjustStock(${item.id}, ${step})">+</button>
+                                </div>
+
+                                <button class="btn-edit" onclick="app.openModal(${item.id})">Editar</button>
+                                <button class="btn-delete" title="Eliminar" onclick="app.deleteItem(${item.id}, '${item.name}')">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            openModal(id = null) {
+                const overlay = document.getElementById('modalOverlay');
+                const form = document.getElementById('materialForm');
+                
+                if (id) {
+                    const item = this.materials.find(m => m.id === id);
+                    if (!item) return;
+                    document.getElementById('itemId').value = item.id;
+                    document.getElementById('itemName').value = item.name;
+                    document.getElementById('itemCategory').value = item.category;
+                    document.getElementById('itemUnit').value = item.unit;
+                    document.getElementById('itemQuantity').value = item.quantity;
+                    document.getElementById('itemMinStock').value = item.min_stock;
+                    document.getElementById('itemNotes').value = item.notes || '';
+                    
+                    document.getElementById('modalTitle').innerText = "Editar Material";
+                    document.getElementById('modalEmoji').innerText = "✏️";
+                    document.getElementById('btnSubmit').innerText = "Actualizar Material";
+                } else {
+                    form.reset();
+                    document.getElementById('itemId').value = "";
+                    document.getElementById('itemQuantity').value = "1";
+                    document.getElementById('itemMinStock').value = "2";
+                    document.getElementById('modalTitle').innerText = "Nuevo Objeto Mágico";
+                    document.getElementById('modalEmoji').innerText = "✨";
+                    document.getElementById('btnSubmit').innerText = "✨ Guardar en Inventario";
+                }
+
+                overlay.classList.add('open');
+            },
+
+            closeModal() {
+                document.getElementById('modalOverlay').classList.remove('open');
+            },
+
+            async saveItem(e) {
+                e.preventDefault();
+                const id = document.getElementById('itemId').value;
+                const payload = {
+                    name: document.getElementById('itemName').value.trim(),
+                    category: document.getElementById('itemCategory').value,
+                    unit: document.getElementById('itemUnit').value,
+                    quantity: parseFloat(document.getElementById('itemQuantity').value) || 0,
+                    min_stock: parseFloat(document.getElementById('itemMinStock').value) || 0,
+                    notes: document.getElementById('itemNotes').value.trim()
+                };
+
+                const isEdit = !!id;
+                const url = isEdit ? `/api/materials/${id}` : '/api/materials';
+                const method = isEdit ? 'PUT' : 'POST';
+
+                try {
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (res.ok) {
+                        this.closeModal();
+                        this.showToast(isEdit ? '✨ Material actualizado' : '🌸 Material guardado con éxito');
+                        await this.loadMaterials();
+                    } else {
+                        alert('Error al guardar material');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Error de conexión');
+                }
+            },
+
+            async adjustStock(id, delta) {
+                try {
+                    const res = await fetch(`/api/materials/${id}/adjust`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ delta: delta, reason: 'Ajuste rápido' })
+                    });
+                    if (res.ok) {
+                        const updated = await res.json();
+                        const idx = this.materials.findIndex(m => m.id === id);
+                        if (idx !== -1) {
+                            this.materials[idx].quantity = updated.quantity;
+                            this.render();
+                        }
+                    }
+                } catch (e) {
+                    console.error("Adjust error", e);
+                }
+            },
+
+            async deleteItem(id, name) {
+                if (!confirm(`¿Deseas eliminar "${name}" del inventario?`)) return;
+                try {
+                    const res = await fetch(`/api/materials/${id}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        this.showToast(`🗑️ "${name}" eliminado`);
+                        await this.loadMaterials();
+                    }
+                } catch (e) {
+                    alert('Error al eliminar');
+                }
+            },
+
+            showToast(msg) {
+                const toast = document.getElementById('toast');
+                document.getElementById('toastMsg').innerText = msg;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+        };
+
+        // Initialize immediately
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
