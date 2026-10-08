@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Robust Self-Contained Fairy CSS (Works 100% on iOS Safari, Android, Desktop) -->
+    <!-- Self-Contained Fairy CSS -->
     <style>
         :root {
             --pink-50: #fff1f5;
@@ -65,7 +65,6 @@
             overflow-x: hidden;
         }
 
-        /* Glassmorphic main container */
         .container {
             max-width: 860px;
             margin: 0 auto;
@@ -117,7 +116,6 @@
             font-weight: 500;
         }
 
-        /* Glass Card */
         .glass-card {
             background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(20px);
@@ -133,7 +131,6 @@
             .glass-card { padding: 32px 28px; border-radius: 36px; }
         }
 
-        /* Top Action Bar */
         .action-bar {
             display: flex;
             flex-direction: column;
@@ -207,7 +204,6 @@
             transform: scale(0.97);
         }
 
-        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -279,7 +275,6 @@
         }
         @media (min-width: 600px) { .stat-icon { display: block; } }
 
-        /* Categories Scroll */
         .categories-scroll {
             display: flex;
             gap: 8px;
@@ -314,7 +309,6 @@
             box-shadow: 0 4px 12px rgba(244, 63, 125, 0.3);
         }
 
-        /* Material Item Row */
         .material-list {
             display: flex;
             flex-direction: column;
@@ -415,7 +409,6 @@
             font-weight: 700;
         }
 
-        /* Controls: Quantity + / - and Edit */
         .item-controls {
             display: flex;
             align-items: center;
@@ -528,7 +521,6 @@
 
         .btn-delete:hover { color: #e11d48; background: #ffe4e6; }
 
-        /* Modal */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -655,7 +647,6 @@
             box-shadow: 0 4px 14px rgba(244, 63, 125, 0.35);
         }
 
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 24px;
@@ -728,7 +719,7 @@
                 </button>
             </div>
 
-            <!-- Stats Grid (Rosa, Amarillo, Menta) -->
+            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card pink">
                     <div>
@@ -861,7 +852,7 @@
         <span id="toastMsg">Mensaje</span>
     </div>
 
-    <!-- Application Controller (Pure JS - 100% Reliable on all browsers) -->
+    <!-- Application Controller -->
     <script>
         const app = {
             materials: [],
@@ -869,8 +860,29 @@
             selectedCategory: "Todas",
             searchQuery: "",
 
+            // Sincronización con LocalStorage (Blindaje contra reinicios)
+            saveLocalCache(items) {
+                try {
+                    localStorage.setItem('atelier_inventario_cache', JSON.stringify(items));
+                    localStorage.setItem('atelier_user_has_saved', 'true');
+                } catch(e) {}
+            },
+
+            getLocalCache() {
+                try {
+                    const raw = localStorage.getItem('atelier_inventario_cache');
+                    return raw ? JSON.parse(raw) : null;
+                } catch(e) { return null; }
+            },
+
             async init() {
                 this.renderCategories();
+                // Si hay caché local, cargarlo inmediatamente para que nunca parpadee
+                const local = this.getLocalCache();
+                if (local && Array.isArray(local)) {
+                    this.materials = local;
+                    this.render();
+                }
                 await this.loadMaterials();
             },
 
@@ -878,12 +890,33 @@
                 try {
                     const res = await fetch('/api/materials');
                     if (res.ok) {
-                        this.materials = await res.json();
-                    } else {
-                        console.error("API error", res.status);
+                        const serverItems = await res.json();
+                        // Si el usuario ya había guardado cosas localmente y el servidor se reinició vacío
+                        const hasUserSaved = localStorage.getItem('atelier_user_has_saved') === 'true';
+                        const localItems = this.getLocalCache();
+
+                        if (serverItems.length === 0 && hasUserSaved && localItems && localItems.length > 0) {
+                            // Restaurar datos del usuario al servidor automáticamente
+                            for (const item of localItems) {
+                                await fetch('/api/materials', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(item)
+                                });
+                            }
+                            const reloadRes = await fetch('/api/materials');
+                            if (reloadRes.ok) {
+                                this.materials = await reloadRes.json();
+                            }
+                        } else {
+                            this.materials = serverItems;
+                        }
+                        this.saveLocalCache(this.materials);
                     }
                 } catch (e) {
-                    console.error("Fetch error", e);
+                    console.warn("Modo offline / usando cache local");
+                    const local = this.getLocalCache();
+                    if (local) this.materials = local;
                 }
                 this.render();
             },
@@ -958,9 +991,9 @@
                     list.innerHTML = `
                         <div class="empty-state">
                             <div style="font-size: 36px; margin-bottom: 8px;">🧚✨</div>
-                            <div style="font-weight: 800; font-size: 16px; color: var(--slate-800);">No se encontraron materiales</div>
+                            <div style="font-weight: 800; font-size: 16px; color: var(--slate-800);">Tu inventario está listo</div>
                             <div style="font-size: 13px; margin-top: 4px; color: var(--slate-500);">
-                                Agrega un nuevo objeto con el botón "+ Agregar Objeto"
+                                Agrega tus propios materiales con el botón "+ Agregar Objeto"
                             </div>
                         </div>
                     `;
@@ -1073,8 +1106,18 @@
                         alert('Error al guardar material');
                     }
                 } catch (err) {
-                    console.error(err);
-                    alert('Error de conexión');
+                    // Si el backend falla, guardar en local de emergencia
+                    if (!isEdit) {
+                        payload.id = Date.now();
+                        this.materials.push(payload);
+                    } else {
+                        const idx = this.materials.findIndex(m => m.id === parseInt(id));
+                        if (idx !== -1) this.materials[idx] = { ...this.materials[idx], ...payload };
+                    }
+                    this.saveLocalCache(this.materials);
+                    this.closeModal();
+                    this.render();
+                    this.showToast('🌸 Guardado en este dispositivo');
                 }
             },
 
@@ -1090,11 +1133,17 @@
                         const idx = this.materials.findIndex(m => m.id === id);
                         if (idx !== -1) {
                             this.materials[idx].quantity = updated.quantity;
+                            this.saveLocalCache(this.materials);
                             this.render();
                         }
                     }
                 } catch (e) {
-                    console.error("Adjust error", e);
+                    const idx = this.materials.findIndex(m => m.id === id);
+                    if (idx !== -1) {
+                        this.materials[idx].quantity = Math.max(0, this.materials[idx].quantity + delta);
+                        this.saveLocalCache(this.materials);
+                        this.render();
+                    }
                 }
             },
 
@@ -1103,11 +1152,16 @@
                 try {
                     const res = await fetch(`/api/materials/${id}`, { method: 'DELETE' });
                     if (res.ok) {
+                        this.materials = this.materials.filter(m => m.id !== id);
+                        this.saveLocalCache(this.materials);
                         this.showToast(`🗑️ "${name}" eliminado`);
-                        await this.loadMaterials();
+                        this.render();
                     }
                 } catch (e) {
-                    alert('Error al eliminar');
+                    this.materials = this.materials.filter(m => m.id !== id);
+                    this.saveLocalCache(this.materials);
+                    this.render();
+                    this.showToast(`🗑️ "${name}" eliminado`);
                 }
             },
 
@@ -1119,7 +1173,6 @@
             }
         };
 
-        // Initialize immediately
         document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
 </body>

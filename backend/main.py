@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from database import get_db_connection, init_db
+from database import get_db_connection, init_db, db_adapter
 
 app = FastAPI(title="Sistema de Inventario para Diseño y Papelería")
 
@@ -18,11 +18,23 @@ app.add_middleware(
 )
 
 # Inicializar DB al cargar el módulo
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"Error initializing DB: {e}")
 
 @app.on_event("startup")
 def on_startup():
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Startup DB init: {e}")
+
+# Helper para ejecutar queries con placeholders dinámicos (? para sqlite, %s para postgres)
+def format_query(sql: str) -> str:
+    if db_adapter.is_postgres:
+        return sql.replace("?", "%s")
+    return sql
 
 # Esquemas Pydantic
 class MaterialBase(BaseModel):
@@ -40,7 +52,7 @@ class MaterialUpdate(MaterialBase):
     pass
 
 class StockAdjust(BaseModel):
-    delta: float = Field(..., description="Cantidad a sumar o restar (positivo o negativo)")
+    delta: float = Field(..., description="Cantidad a sumar o restar")
     reason: Optional[str] = Field(default="Ajuste manual", description="Motivo del ajuste")
 
 # Rutas API
@@ -53,8 +65,8 @@ def list_materials(search: Optional[str] = None, category: Optional[str] = None)
     params = []
     
     if search:
-        query += " AND (name LIKE ? OR notes LIKE ? OR category LIKE ?)"
-        term = f"%{search}%"
+        query += " AND (LOWER(name) LIKE ? OR LOWER(notes) LIKE ? OR LOWER(category) LIKE ?)"
+        term = f"%{search.lower()}%"
         params.extend([term, term, term])
         
     if category and category.lower() != "todas":
@@ -63,7 +75,7 @@ def list_materials(search: Optional[str] = None, category: Optional[str] = None)
         
     query += " ORDER BY category ASC, name ASC"
     
-    cursor.execute(query, params)
+    cursor.execute(format_query(query), params)
     rows = cursor.fetchall()
     conn.close()
     
@@ -73,7 +85,7 @@ def list_materials(search: Optional[str] = None, category: Optional[str] = None)
 def get_material(material_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM materials WHERE id = ?", (material_id,))
+    cursor.execute(format_query("SELECT * FROM materials WHERE id = ?"), (material_id,))
     row = cursor.fetchone()
     conn.close()
     if not row:
@@ -84,20 +96,23 @@ def get_material(material_id: int):
 def create_material(material: MaterialCreate):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO materials (name, category, quantity, unit, min_stock, notes)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (material.name.strip(), material.category.strip(), material.quantity, material.unit.strip(), material.min_stock, material.notes.strip()))
-    new_id = cursor.lastrowid
     
-    # Registrar log inicial
-    cursor.execute("""
-        INSERT INTO inventory_logs (material_id, change_amount, previous_quantity, new_quantity, reason)
-        VALUES (?, ?, 0, ?, 'Creación de material')
-    """, (new_id, material.quantity, material.quantity))
-    
+    if db_adapter.is_postgres:
+        cursor.execute("""
+            INSERT INTO materials (name, category, quantity, unit, min_stock, notes)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id;
+        """, (material.name.strip(), material.category.strip(), material.quantity, material.unit.strip(), material.min_stock, material.notes.strip()))
+        new_id = cursor.fetchone()["id"]
+    else:
+        cursor.execute("""
+            INSERT INTO materials (name, category, quantity, unit, min_stock, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (material.name.strip(), material.category.strip(), material.quantity, material.unit.strip(), material.min_stock, material.notes.strip()))
+        new_id = cursor.lastrowid
+        
     conn.commit()
-    cursor.execute("SELECT * FROM materials WHERE id = ?", (new_id,))
+    cursor.execute(format_query("SELECT * FROM materials WHERE id = ?"), (new_id,))
     new_material = dict(cursor.fetchone())
     conn.close()
     return new_material
@@ -107,28 +122,20 @@ def update_material(material_id: int, material: MaterialUpdate):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT quantity FROM materials WHERE id = ?", (material_id,))
+    cursor.execute(format_query("SELECT quantity FROM materials WHERE id = ?"), (material_id,))
     prev = cursor.fetchone()
     if not prev:
         conn.close()
         raise HTTPException(status_code=404, detail="Material no encontrado")
     
-    prev_qty = prev["quantity"]
-    
-    cursor.execute("""
+    cursor.execute(format_query("""
         UPDATE materials 
         SET name = ?, category = ?, quantity = ?, unit = ?, min_stock = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-    """, (material.name.strip(), material.category.strip(), material.quantity, material.unit.strip(), material.min_stock, material.notes.strip(), material_id))
+    """), (material.name.strip(), material.category.strip(), material.quantity, material.unit.strip(), material.min_stock, material.notes.strip(), material_id))
     
-    if prev_qty != material.quantity:
-        cursor.execute("""
-            INSERT INTO inventory_logs (material_id, change_amount, previous_quantity, new_quantity, reason)
-            VALUES (?, ?, ?, ?, 'Edición de información')
-        """, (material_id, material.quantity - prev_qty, prev_qty, material.quantity))
-        
     conn.commit()
-    cursor.execute("SELECT * FROM materials WHERE id = ?", (material_id,))
+    cursor.execute(format_query("SELECT * FROM materials WHERE id = ?"), (material_id,))
     updated = dict(cursor.fetchone())
     conn.close()
     return updated
@@ -137,26 +144,21 @@ def update_material(material_id: int, material: MaterialUpdate):
 def adjust_stock(material_id: int, adjust: StockAdjust):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT quantity FROM materials WHERE id = ?", (material_id,))
+    cursor.execute(format_query("SELECT quantity FROM materials WHERE id = ?"), (material_id,))
     row = cursor.fetchone()
     if not row:
         conn.close()
         raise HTTPException(status_code=404, detail="Material no encontrado")
         
-    current_qty = row["quantity"]
+    current_qty = float(row["quantity"])
     new_qty = max(0.0, round(current_qty + adjust.delta, 2))
     
-    cursor.execute("""
+    cursor.execute(format_query("""
         UPDATE materials SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-    """, (new_qty, material_id))
-    
-    cursor.execute("""
-        INSERT INTO inventory_logs (material_id, change_amount, previous_quantity, new_quantity, reason)
-        VALUES (?, ?, ?, ?, ?)
-    """, (material_id, round(new_qty - current_qty, 2), current_qty, new_qty, adjust.reason))
+    """), (new_qty, material_id))
     
     conn.commit()
-    cursor.execute("SELECT * FROM materials WHERE id = ?", (material_id,))
+    cursor.execute(format_query("SELECT * FROM materials WHERE id = ?"), (material_id,))
     updated = dict(cursor.fetchone())
     conn.close()
     return updated
@@ -165,7 +167,7 @@ def adjust_stock(material_id: int, adjust: StockAdjust):
 def delete_material(material_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM materials WHERE id = ?", (material_id,))
+    cursor.execute(format_query("DELETE FROM materials WHERE id = ?"), (material_id,))
     deleted = cursor.rowcount
     conn.commit()
     conn.close()
@@ -182,31 +184,14 @@ def get_categories():
     conn.close()
     base_cats = ["Papelería", "Pintura", "Manualidades", "Materiales", "Herramientas", "Textil", "Otros"]
     existing_cats = [r["category"] for r in rows if r["category"]]
-    # Unir manteniendo orden
     all_cats = list(dict.fromkeys(base_cats + existing_cats))
     return all_cats
-
-@app.get("/api/units")
-def get_units():
-    return [
-        {"id": "unidades", "label": "Unidades / Piezas", "step": 1, "is_decimal": False},
-        {"id": "láminas", "label": "Láminas / Placas", "step": 1, "is_decimal": False},
-        {"id": "pliegos", "label": "Pliegos", "step": 1, "is_decimal": False},
-        {"id": "metros", "label": "Metros (m)", "step": 0.5, "is_decimal": True},
-        {"id": "centímetros", "label": "Centímetros (cm)", "step": 10, "is_decimal": False},
-        {"id": "rollos", "label": "Rollos", "step": 1, "is_decimal": False},
-        {"id": "cajas", "label": "Cajas / Paquetes", "step": 1, "is_decimal": False},
-        {"id": "botes", "label": "Botes / Frascos", "step": 1, "is_decimal": False},
-        {"id": "gramos", "label": "Gramos (g)", "step": 50, "is_decimal": False},
-        {"id": "kilos", "label": "Kilogramos (kg)", "step": 0.5, "is_decimal": True},
-        {"id": "litros", "label": "Litros (L)", "step": 0.5, "is_decimal": True}
-    ]
 
 @app.get("/api/stats")
 def get_stats():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) as total_items, SUM(quantity) as total_units FROM materials")
+    cursor.execute("SELECT COUNT(*) as total_items FROM materials")
     total_row = cursor.fetchone()
     
     cursor.execute("SELECT COUNT(*) as low_stock FROM materials WHERE quantity <= min_stock")
@@ -217,12 +202,12 @@ def get_stats():
     
     conn.close()
     return {
-        "total_materials": total_row["total_items"] or 0,
-        "low_stock_count": low_row["low_stock"] or 0,
-        "total_categories": cat_row["total_categories"] or 0
+        "total_materials": total_row["total_items"] if total_row else 0,
+        "low_stock_count": low_row["low_stock"] if low_row else 0,
+        "total_categories": cat_row["total_categories"] if cat_row else 0
     }
 
 # Servir archivos estáticos del frontend
-frontend_dir = Path(__file__).parent.parent / "frontend"
+frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
 if frontend_dir.exists():
     app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
